@@ -1,0 +1,74 @@
+generator client {
+  provider = "prisma-client-js"
+  previewFeatures = ["clientExtensions"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model business_organization {
+  id      String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name    String    @db.VarChar(255)
+  user_id String    @db.Uuid
+  user    user      @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  project project[]
+}
+
+model project {
+  id                       String                @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name                     String                @db.VarChar(255)
+  business_organization_id String                @db.Uuid
+  project_manager_id       String                @db.Uuid
+  business_organization    business_organization @relation(fields: [business_organization_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  user                     user                  @relation(fields: [project_manager_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  report                   report[]
+  resource                 resource[]
+  task                     task[]
+}
+
+model report {
+  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name          String   @db.VarChar(255)
+  content       String
+  creation_date DateTime @db.Date
+  project_id    String   @db.Uuid
+  creator_id    String   @db.Uuid
+  user          user     @relation(fields: [creator_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  project       project  @relation(fields: [project_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model resource {
+  id         String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name       String  @db.VarChar(255)
+  type       String  @db.VarChar(255)
+  quantity   Int
+  project_id String  @db.Uuid
+  project    project @relation(fields: [project_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model task {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name        String   @db.VarChar(255)
+  description String?
+  status      String   @db.VarChar(255)
+  deadline    DateTime @db.Date
+  project_id  String   @db.Uuid
+  assignee_id String   @db.Uuid
+  user        user     @relation(fields: [assignee_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  project     project  @relation(fields: [project_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model user {
+  id                    String                  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  email                 String                  @unique @db.VarChar(255)
+  firstName             String?                 @db.VarChar(255)
+  lastName              String?                 @db.VarChar(255)
+  roq_user_id           String                  @db.VarChar(255)
+  tenant_id             String                  @db.VarChar(255)
+  business_organization business_organization[]
+  project               project[]
+  report                report[]
+  task                  task[]
+}
